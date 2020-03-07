@@ -1,1 +1,1 @@
-# Reposit rio para a aula de ai
+# Repositório para a aula de ai

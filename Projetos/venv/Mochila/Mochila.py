@@ -73,12 +73,40 @@ def reproduzir (objetoX, objetoY):
 
     corte = random.randint(0, tamanho)
 
-    organizacaoX = set()
-    i = 0
-    while i <= corte:
+    novaOrganizacaoX = set()
+    novaOrganizacaoY = set()
+    for x in organizacaoX:
+        i = 0
+        if i <= corte:
+            novaOrganizacaoX.add(x)
+        else:
+            novaOrganizacaoY.add(x)
+
+    for x in organizacaoY:
+        i = 0
+        if i <= corte:
+            novaOrganizacaoY.add(x)
+        else:
+            novaOrganizacaoX.add(x)
+
+    novasOrgs = []
+    novasOrgs.append(novaOrganizacaoX)
+    novasOrgs.append(novaOrganizacaoY)
+    return  novasOrgs
+
         
+def selecao (populacao, fitness):
 
 
 def algoritimoGenetico(numero_individuos, tamanho_mochila):
     populacao = inicia_populacao(numero_individuos, tamanho_mochila)
+    fitness = 0
+    for f in populacao:
+       fitness += f.getFitness()
+    escolidosReproducao = []
+    novaPopulacao = []
+    for e in escolidosReproducao:
+       filhos = reproduzir(e[0], e[1])
+       novaPopulacao.append(filhos[0], filhos[1])
+    
 

@@ -79,7 +79,7 @@ class LinearRegression:
     def squaredErrorCost(self, data, target):
         # TODO: CALCULAR O ERRO PARA TODOS OS PONTOS
         error = self.calculateError(data, target)
-        squaredError = (1.0 / (2 * nExemples)) * (error.T.dot(error))
+        squaredError = (1.0 / (2 * self.nExemples)) * (error.T.dot(error))
         return squaredError
 
 
@@ -143,28 +143,30 @@ class LinearRegression:
         testingErrors = list()
         trainingErrors.append(lmsError[0])
 
-        if performTest:
-            lmsError = self.squaredErrorCost(self.testData, self.testTarget)
-            testingErrors.append(lmsError[0])
+        if self.performTest:
+            lmsTestError = self.squaredErrorCost(self.testData, self.testTarget)
+            testingErrors.append(lmsTestError[0])
         
         print("ERROR: " + str(lmsError))
         print("WEIGTHS: " + str(self.weigths))
 
         while lmsError > self.errorThreshold and count < self.maxIter:
             self.gradientDescent()
-            count +=1
+            
 
             lmsError = self.squaredErrorCost(self.dataset, self.target)
             trainingErrors.append(lmsError[0])
 
-            if performTest:
-                lmsError = self.squaredErrorCost(self.testData, self.testTarget)
-                testingErrors.append(lmsError[0])
+            if self.performTest:
+                lmsTestError = self.squaredErrorCost(self.testData, self.testTarget)
+                testingErrors.append(lmsTestError[0])
 
             if count % 100 == 0:
                 print("ERROR: " + str(lmsError))
                 print("WEIGTHS: " + str(self.weigths))
                 self.plotLineGraph(self.weigths, count)
+
+            count +=1
         
         if self.performTest:
             self.plotCostGraph(trainingErrors, testingErrors)

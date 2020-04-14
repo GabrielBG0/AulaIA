@@ -80,10 +80,17 @@ class LinearRegression:
         # TODO: CALCULAR O ERRO PARA TODOS OS PONTOS
         error = self.calculateError(data, target)
         squaredError = (1.0 / (2 * nExemples)) * (error.T.dot(error))
+        return squaredError
 
 
     def gradientDescent(self):
         # TODO: GRADIENTE DESCENDENTE
+        cost = self.calculateError(self.dataset, self.target)
+        for i in range(self.nAttributes):
+            temp = self.dataset[:, i]
+            temp.shape = (slef.nExemples, 1)
+            currentErrors = cost * temp
+            self.weigths[i][0] = self.weigths[i][0] - self.alpha * ((1.0/self.nExemples) * currentErrors.sum())
 
 
     def plotCostGraph(self, trainingErrorsList, testingErrorsList=None):
@@ -130,6 +137,41 @@ class LinearRegression:
 
     def run(self):
         # TODO: PRINCIPAL
+        lmsError = self.squaredErrorCost(self.dataset, self.target)
+        count = 0
+        trainingErrors = list()
+        testingErrors = list()
+        trainingErrors.append(lmsError[0])
+
+        if performTest:
+            lmsError = self.squaredErrorCost(self.testData, self.testTarget)
+            testingErrors.append(lmsError[0])
+        
+        print("ERROR: " + str(lmsError))
+        print("WEIGTHS: " + str(self.weigths))
+
+        while lmsError > self.errorThreshold and count < self.maxIter:
+            self.gradientDescent()
+            count +=1
+
+            lmsError = self.squaredErrorCost(self.dataset, self.target)
+            trainingErrors.append(lmsError[0])
+
+            if performTest:
+                lmsError = self.squaredErrorCost(self.testData, self.testTarget)
+                testingErrors.append(lmsError[0])
+
+            if count % 100 == 0:
+                print("ERROR: " + str(lmsError))
+                print("WEIGTHS: " + str(self.weigths))
+                self.plotLineGraph(self.weigths, count)
+        
+        if self.performTest:
+            self.plotCostGraph(trainingErrors, testingErrors)
+        else:
+            self.plotCostGraph(trainingErrors)  
+
+
 
 if __name__ == '__main__':
     linReg = LinearRegression("D:/Nextcloud/UFMS/Aulas/2020-1/IA/codigos/income/income.csv",

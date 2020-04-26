@@ -176,7 +176,7 @@ class LinearRegression:
 
 
 if __name__ == '__main__':
-    linReg = LinearRegression("D:/Nextcloud/UFMS/Aulas/2020-1/IA/codigos/income/income.csv",
-                              "D:/Nextcloud/UFMS/Aulas/2020-1/IA/codigos/income",
+    linReg = LinearRegression("C:\Users\gabre\Documents\IA\Regreção_Linear\income.csv",
+                              "C:\Users\gabre\Documents\IA\Regreção_Linear\Graficos",
                               normalize=True, performTest=True, alpha=0.0001, maxIter=1000)
     linReg.run()

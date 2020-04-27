@@ -5,13 +5,14 @@ import matplotlib.pyplot as plt
 
 class LinearRegression:
 
-    def __init__(self, dataFilePath, outputPath, alpha=0.01,
+    def __init__(self, dataFilePath, outputPath, alpha=0.01, lamb=1000,
                  maxIter=500, errorThreshold=0.001,
                  performTest=False, normalize=False):
 
         self.dataFilePath = dataFilePath
         self.outputPath = outputPath
         self.alpha = alpha
+        self.lamb = lamb
         self.maxIter = maxIter
         self.errorThreshold = errorThreshold
         self.performTest = performTest
@@ -90,7 +91,7 @@ class LinearRegression:
             temp = self.dataset[:, i]
             temp.shape = (self.nExemples, 1)
             currentErrors = cost * temp
-            self.weigths[i][0] = self.weigths[i][0] - self.alpha * ((1.0/self.nExemples) * currentErrors.sum())
+            self.weigths[i][0] = self.weigths[i][0] * (1.0 - (self.alpha * (self.lamb/self.nExemples))) - self.alpha * ((1.0/self.nExemples) * currentErrors.sum())
 
 
     def plotCostGraph(self, trainingErrorsList, testingErrorsList=None):
@@ -178,5 +179,5 @@ class LinearRegression:
 if __name__ == '__main__':
     linReg = LinearRegression("C:/Users/gabre/Documents/IA/Regularização/income.csv",
                               "C:/Users/gabre/Documents/IA/Regularização/Graficos",
-                              normalize=True, performTest=True, alpha=0.0001, maxIter=1000)
+                              normalize=True, performTest=True, alpha=0.0001, lamb=100, maxIter=1000)
     linReg.run()

@@ -21,12 +21,12 @@ class LinearRegression:
         self.initWeights()
 
     def featureNormalize(self, X):
-        X_Norm = X
-        for i in range(len(x[0])):
-            m = np.mean(x[:,i])
-            s = np.std(x[:,i])
-            X_norm[:,i] = (X_Norm[:, i] - m) /s
-        return X_Norm
+        xNorm = X
+        for i in range(len(X[0])):
+            m = np.mean(X[:,i])
+            s = np.std(X[:,i])
+            xNorm[:,i] = (xNorm[:, i] - m) /s
+        return xNorm
 
     def loadDataFromFile(self):
         datesettloaded = np.loadtxt(self.dataFilePath, delimiter=";", skiprows=1)
@@ -88,7 +88,7 @@ class LinearRegression:
         cost = self.calculateError(self.dataset, self.target)
         for i in range(self.nAttributes):
             temp = self.dataset[:, i]
-            temp.shape = (slef.nExemples, 1)
+            temp.shape = (self.nExemples, 1)
             currentErrors = cost * temp
             self.weigths[i][0] = self.weigths[i][0] - self.alpha * ((1.0/self.nExemples) * currentErrors.sum())
 
@@ -176,7 +176,7 @@ class LinearRegression:
 
 
 if __name__ == '__main__':
-    linReg = LinearRegression("C:\Users\gabre\Documents\IA\Regreção_Linear\income.csv",
-                              "C:\Users\gabre\Documents\IA\Regreção_Linear\Graficos",
+    linReg = LinearRegression("C:/Users/gabre/Documents/IA/RegressãoLinear/income.csv",
+                              "C:/Users/gabre/Documents/IA/RegressãoLinear/Graficos",
                               normalize=True, performTest=True, alpha=0.0001, maxIter=1000)
     linReg.run()

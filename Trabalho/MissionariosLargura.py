@@ -14,7 +14,7 @@ def geraFilhos(s):
 
     if s[2] == 1:
 
-        if (s[0] >= 0) and (s[1] >= 0):
+        if (s[0] > 0) or (s[1] > 0):
 
             if (s[0] == s[1]):
                 estado = [s[0] - 1, s[1] - 1, 0]

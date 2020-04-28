@@ -14,20 +14,56 @@ def geraFilhos(s):
 
     if s[2] == 1:
 
-        if (s[0] > 0) and (s[0] - s[1] > 0):
-            # -1 misiionario
-            estado = [s[0] - 1, s[1], 0]
-            listaDeFilhos.append(estado)
+        if (s[0] >= 0) and (s[1] >= 0):
 
-        if s[1] > 0:
-            # -1 canibal
-            estado = [s[0], s[1] - 1, 0]
-            listaDeFilhos.append(estado)
+            if (s[0] == s[1]):
+                estado = [s[0] - 1, s[1] - 1, 0]
+                listaDeFilhos.append(estado)
+
+            if (s[0] == s[1]) and (s[0] >= 2):
+                estado = [s[0] - 2, s[1], 0]
+                listaDeFilhos.append(estado)
+
+            if (s[0] == 3) and (s[1] >= 2):
+                estado = [s[0], s[1] - 2, 0]
+                listaDeFilhos.append(estado)
+
+            if (s[0] == 3) and (s[1] <= 2):
+                estado = [s[0] - 2, s[1], 0]
+                listaDeFilhos.append(estado)
+
+            if (s[0] == 2) and (s[1] == 1):
+                estado = [s[0] - 2, s[1], 0]
+                listaDeFilhos.append(estado)
+
+            if (s[0] == 0) and (s[1] == 3):
+                estado = [s[0], s[1] - 2, 0]
+                listaDeFilhos.append(estado)
 
     else:
-        # canoa na margem esquera
-        estado = [s[0], s[1], 1]
-        listaDeFilhos.append(estado)
+        if (s[0] == s[1]) and (s[0] == 2):
+            estado = [s[0] + 1, s[1], 1]
+            listaDeFilhos.append(estado)
+
+        if (s[0] == 0) and (s[1] <= 1):
+            estado = [s[0] + 1, s[1], 1]
+            listaDeFilhos.append(estado)
+
+        if (s[1] == 0) and (s[0] >= 1):
+            estado = [s[0], s[1] + 1, 1]
+            listaDeFilhos.append(estado)
+
+        if (s[0] == s[1]):
+            estado = [s[0] + 1, s[1] + 1, 1]
+            listaDeFilhos.append(estado)
+
+        if (s[0] == 0) and (s[1] <= 2):
+            estado = [s[0], s[1] + 1, 1]
+            listaDeFilhos.append(estado)
+
+        if (s[1] == 0) and (s[0] >= 1):
+            estado = [s[0], s[1] + 1, 1]
+            listaDeFilhos.append(estado)
 
     return listaDeFilhos
 
@@ -48,7 +84,6 @@ def busca(inicio):
             while node != inicio:
                 res.append(node)
                 node = pais[filhosToString(node)]
-            res.append(inicio)
             res.reverse()
             print("Solucao encontrada: ", res)
 

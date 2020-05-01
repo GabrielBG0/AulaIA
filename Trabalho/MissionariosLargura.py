@@ -87,12 +87,12 @@ def busca(inicio):
             res.reverse()
             print("Solucao encontrada: ", res)
 
-        for son in geraFilhos(pai):
-            if son not in visitados:
-                print("Enfileirado: ", son, pai)
-                visitados.append(son)
-                pais[filhosToString(son)] = pai
-                candidatos.append(son)
+        for filho in geraFilhos(pai):
+            if filho not in visitados:
+                print("Enfileirado: ", filho, pai)
+                visitados.append(filho)
+                pais[filhosToString(filho)] = pai
+                candidatos.append(filho)
 
 
 if __name__ == '__main__':

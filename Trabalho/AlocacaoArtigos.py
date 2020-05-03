@@ -24,28 +24,21 @@ class AlocacaoArtigos:
                     capacidade = i[j]
             self.matrizReferencia.append([artigos, capacidade])
         self.fitnessTotal = []
+        self.populacao = []
 
     def run(self):
         print('running')
         # print(self.individuos)  # matriz para referencia de afinidade
         # print(self.individuos[3])  # recuperando um individuo na matriz
 
-        teste = []
-        teste.append([1, 1, 1, 1, 1])
-        teste.append([1, 1, 0, 1, 0])
-        teste.append([1, 0, 1, 1, 0])
-        teste.append([0, 0, 1, 1, 0])
-
-        teste2 = []
-        teste2.append([0, 1, 1, 0, 0])
-        teste2.append([1, 1, 1, 1, 0])
-        teste2.append([1, 1, 0, 1, 0])
-        teste2.append([1, 1, 0, 1, 0])
+        
+        self.initialize()
+        selecao = self.selection(self.populacao)
 
     # gera a população inicial aleatoriamente
 
     def initialize(self):
-        populationSize = 10
+        populationSize = 6
         numRevisores = 4
         numArtigos = 5
         for n in range(populationSize):  # gerar 10 individuos
@@ -59,7 +52,7 @@ class AlocacaoArtigos:
 
                     # repetindo suficiente para usar o limite
                     for j in range(limiteDeArtigos):
-                        position = random.randint(0, 4)
+                        position = rng.randint(0, 4)
                         revisor[position] = 1
 
                     novoIndividuo.append(revisor)
@@ -138,12 +131,12 @@ class AlocacaoArtigos:
                 porcaoRoleta[i] += porcaoRoleta[i - 1]
 
         selecionados = []
-        for rodadas in range(1, len(self.fitnessTotal) - 1):
+        for rodadas in range(0, len(self.fitnessTotal) // 2):
             rnga = rng.randint(0, 359)
             rngb = rng.randint(0, 359)
+            individuoa = -1
+            individuob = -1
             for i in range(0, len(porcaoRoleta)):
-                individuoa = -1
-                individuob = -1
                 if (i == 0) and (rnga < porcaoRoleta[i]):
                     individuoa = i
                 if (i == 0) and (rngb < porcaoRoleta[i]):
@@ -152,7 +145,7 @@ class AlocacaoArtigos:
                     individuoa = i
                 if (i > 0) and (porcaoRoleta[i - 1] < rngb) and (rngb < (porcaoRoleta[i])):
                     individuob = i
-            selecionados.append[individuos[individuoa], individuos[individuob]]
+            selecionados.append([individuos[individuoa], individuos[individuob]])
 
         return selecionados
 

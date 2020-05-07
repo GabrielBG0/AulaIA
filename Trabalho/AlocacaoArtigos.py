@@ -4,9 +4,17 @@ import numpy as np
 
 class AlocacaoArtigos:
 
-    def __init__(self, dataFilePath):
+    populationSize = 6
+    numRevisores = 4
+    numArtigos = 5
+    maxgen = 100
+    mutationrate = 0.1
+    crossoverrate = 0.7
+
+    def __init__(self, dataFilePath, outputPath):
 
         self.dataFilePath = dataFilePath
+        self.outputPath = outputPath
         self.loadDataFromFile()
 
     def loadDataFromFile(self):
@@ -24,29 +32,40 @@ class AlocacaoArtigos:
                     capacidade = i[j]
             self.matrizReferencia.append([artigos, capacidade])
         self.fitnessTotal = []
+        self.historicoFitness = []
         self.populacao = []
 
     def run(self):
         print('running')
-        # print(self.individuos)  # matriz para referencia de afinidade
-        # print(self.individuos[3])  # recuperando um individuo na matriz
+        teste = []
+        teste.append([1, 1, 1, 1, 1])
+        teste.append([0, 0, 0, 0, 0])
+        teste.append([1, 0, 1, 1, 0])
+        teste.append([0, 0, 1, 1, 0])
 
-        
-        self.initialize()
-        selecao = self.selection(self.populacao)
+        teste2 = []
+        teste2.append([0, 1, 1, 0, 0])
+        teste2.append([1, 1, 1, 1, 0])
+        teste2.append([1, 1, 0, 1, 0])
+        teste2.append([1, 1, 0, 1, 0])
+
+        teste3 = []
+        teste3.append([0, 0, 1, 0, 0])
+        teste3.append([1, 1, 0, 0, 0])
+        teste3.append([0, 0, 0, 1, 0])
+        teste3.append([0, 0, 0, 0, 1])
+
+        self.resultadoTotxt(teste3)
 
     # gera a população inicial aleatoriamente
-
     def initialize(self):
-        populationSize = 6
-        numRevisores = 4
-        numArtigos = 5
-        for n in range(populationSize):  # gerar 10 individuos
+
+        for n in range(self.populationSize):  # gerar 6 individuos
             # enquanto não houver individuos validos suficientes
-            while len(self.populacao) < populationSize:
+            while len(self.populacao) < self.populationSize:
                 novoIndividuo = []
 
-                for i in range(numRevisores):  # para cada revisor necessário
+                for i in range(self.numRevisores):  # para cada revisor necessário
                     revisor = [0] * 5  # novo revisor
                     limiteDeArtigos = int(self.matrizReferencia[i][1])
 
@@ -58,17 +77,19 @@ class AlocacaoArtigos:
                     novoIndividuo.append(revisor)
                 if self.validate(novoIndividuo):
                     self.populacao.append(novoIndividuo)
+        self.showPopulation()
         return
 
     def showPopulation(self):
         for i in range(len(self.populacao)):
-            print('\nINDIVIDUO:', i+1)
+            print('\nINDIVIDUO:', i+1, 'FITNESS: ',
+                  self.fitness(self.populacao[i]))
             for j in self.populacao[i]:
                 print(j)
 
     # valida um individuo de acordo com seus limites e distribuição de artigos
     def validate(self, individuo):
-        artigosAlocados = [False] * 5
+        artigosAlocados = [False] * self.numArtigos
 
         for i in range(len(individuo)):
             revisor = individuo[i]
@@ -93,12 +114,25 @@ class AlocacaoArtigos:
 
     # causa mutação em um individuo, descartando resultados inválidos
     def mutate(self, individuo):
-        return
+        valido = False
+        while valido == False:
+            mutatedRow = [0] * 5
+            revisorEscolhido = rng.randint(0, len(individuo)-1)
+            limite = int(self.matrizReferencia[revisorEscolhido][1])
+            for i in range(limite):
+                posicao = rng.randint(0, len(individuo[revisorEscolhido]) - 1)
+                mutatedRow[posicao] = 1
+            individuo[revisorEscolhido] = mutatedRow
+
+            valido = self.validate(individuo)
+        # individuo = self.correcao(individuo)
+
+        return individuo
 
     # mescla parte de um individuo com parte de outro, descartando resultados invalidos
     def reproduce(self, individuox, individuoy):
         corte = rng.randint(0, len(self.matrizReferencia) - 1)
-        print(corte)
+        # print(corte)
         novox = []
         novoy = []
         resultado = []
@@ -114,6 +148,75 @@ class AlocacaoArtigos:
         resultado.append([novox, novoy])
         return resultado
 
+    def correcao(self, individuo):
+
+        for i in range(0, len(self.matrizReferencia)):
+            aloc = self.contAloc(individuo[i])
+            while aloc > self.matrizReferencia[i][1]:
+                j = rng.randint(0, len(individuo[i]) - 1)
+                if individuo[i][j] == 1:
+                    individuo[i][j] = 0
+                    aloc -= 1
+        for i in range(0, len(individuo)):
+            corretoresx = []
+            for j in range(0, self.nArtigos - 1):
+                if individuo[j][i] == 1:
+                    corretoresx.append(j)
+            if len(corretoresx) > 1:
+                maiorNota = 0
+                indiceCorretor = -1
+                for corretor in range(0, len(corretoresx)):
+                    if corretor == 0:
+                        maiorNota = self.matrizReferencia[corretoresx[corretor]][0][i]
+                        indiceCorretor = corretoresx[corretor]
+                    elif self.matrizReferencia[corretoresx[corretor]][0][i] > maiorNota:
+                        individuo[indiceCorretor][i] = 0
+                        maiorNota = self.matrizReferencia[corretoresx[corretor]][0][i]
+                        indiceCorretor = corretoresx[corretor]
+                    else:
+                        individuo[corretoresx[corretor]][i] = 0
+        semCorretor = []
+        for i in range(0, self.nArtigos):
+            corretoresx = []
+            for j in range(0, self.nArtigos - 1):
+                if individuo[j][i] == 1:
+                    corretoresx.append(j)
+            if len(corretoresx) == 0:
+                semCorretor.append(i)
+        for corretor in range(0, len(individuo)):
+            if len(semCorretor) > 0:
+                corrigidos = 0
+                for artigo in range(0, self.nArtigos):
+                    if individuo[corretor][artigo] == 1:
+                        corrigidos += 1
+                if corrigidos < self.matrizReferencia[corretor][1]:
+                    individuo[corretor][semCorretor.pop()] = 1
+            else:
+                break
+
+        return individuo
+
+    def crossover(self, individuox, individuoy):
+        corte = rng.randint(0, len(self.matrizReferencia) - 1)
+        print(corte)
+        novox = []
+        novoy = []
+        resultado = []
+
+        for i in range(0, len(self.matrizReferencia)):
+            if i < corte:
+                novox.append(individuox[i])
+                novoy.append(individuoy[i])
+            else:
+                novox.append(individuoy[i])
+                novoy.append(individuox[i])
+
+        novox = self.correcao(novox)
+        novoy = self.correcao(novoy)
+
+        resultado.append([novox, novoy])
+        return resultado
+
     # seleciona os individuos mais adaptados para a próxima geração
     def selection(self, individuos):
         self.fitnessTotal.clear()
@@ -123,6 +226,8 @@ class AlocacaoArtigos:
 
         total = np.sum(self.fitnessTotal)
         porcaoRoleta = []
+
+        self.historicoFitness.append(np.mean(self.fitnessTotal))
 
         for fitness in self.fitnessTotal:
             porcaoRoleta.append((fitness * 360) / total)
@@ -145,7 +250,8 @@ class AlocacaoArtigos:
                     individuoa = i
                 if (i > 0) and (porcaoRoleta[i - 1] < rngb) and (rngb < (porcaoRoleta[i])):
                     individuob = i
-            selecionados.append([individuos[individuoa], individuos[individuob]])
+            selecionados.append(
+                [individuos[individuoa], individuos[individuob]])
 
         return selecionados
 
@@ -160,6 +266,26 @@ class AlocacaoArtigos:
 
     # função principal, aloca revisores e artigos usando mutação, reprodução e seleção.
     def alocate(self, population):
+        for geracao in range(self.maxgen):  # numero de gerações
+            newPopulation = []
+            selecionados = self.selection(self.populacao)
+            for couple in range(len(selecionados)):
+                parents = selecionados[couple]
+                crossoverChance = rng.random()
+                children = []
+                if crossoverChance < self.crossoverrate:
+                    children = self.crossover(parents[0], parents[1])
+                else:
+                    children.append(parents)
+                for child in children[0]:
+                    mutationChance = rng.random()
+                    if mutationChance < self.mutationrate:
+                        child = self.mutate(child)
+                    newPopulation.append(child)
+            self.populacao = newPopulation
+            print('\nGERAÇÃO #', geracao+1)
+            self.showPopulation()
+
         return
 
     # percorre um corretor e conta quantos artigos ele está alocado para corrigir
@@ -170,14 +296,33 @@ class AlocacaoArtigos:
                 count += 1
         return count
 
-    def grafico(self):
-        return
+    def plotFitnessGraph(self, bestTrainingErrorsList, avredgeTraningListError):
+        xAxisValues = range(0, len(trainingErrorsList))
 
-    def resultadoTotxt(self):
-        return
+        line1 = plt.plot(xAxisValues, trainingErrorsList, label="Best Fitness")
+        line2 = plt.plot(xAxisValues, avredgeTraningListError,
+                         linestyle="dashed", label="Avredge Traning List Error")
+
+        plt.legend()
+        plt.xlabel("Iteration")
+        plt.ylabel("Fitness")
+        plt.savefig(self.outputPath + "/fitness.png")
+        plt.show()
+        plt.close()
+
+    def resultadoTotxt(self, individuo):
+        result = []
+        for artigo in range(0, self.nArtigos):
+            for corretor in range(0, len(self.matrizReferencia)):
+                if individuo[corretor][artigo] == 1:
+                    result.append(corretor)
+                    break
+
+        np.savetxt('saida-genetico.txt', result, fmt='%d',
+                   newline=',')
 
 
 if __name__ == '__main__':
     geneticAlg = AlocacaoArtigos(
-        "C:/Users/gabre/Documents/IA/Trabalho/database.txt")
+        "C:/Users/gabre/Documents/IA/Trabalho/database.txt", "C:/Users/gabre/Documents/IA/Trabalho")
     geneticAlg.run()

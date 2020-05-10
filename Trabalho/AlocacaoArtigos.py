@@ -67,8 +67,8 @@ class AlocacaoArtigos:
                         newPopulation[individuo]))
                     teste = self.validate(newPopulation[individuo])
             self.populacao = deepcopy(newPopulation)
-            print('\nGERAÇÃO #', geracao+1)
-            self.showPopulation()
+            # print('\nGERAÇÃO #', geracao+1)
+            # self.showPopulation()
             self.fitnessPop(self.populacao)
         self.avredgeFitness.append(self.historicoFitness)
         self.attMelhorFitness(self.getBest(self.populacao), self.populacao)
@@ -112,8 +112,6 @@ class AlocacaoArtigos:
                     novoIndividuo.append(revisor)
                 novoIndividuo = self.correcao(novoIndividuo)
                 self.populacao.append(novoIndividuo)
-        self.showPopulation()
-        return
 
     # imprime na tela uma geração com o fitness respectivo de cada individuo.
     def showPopulation(self):
@@ -216,7 +214,6 @@ class AlocacaoArtigos:
 
     def crossover(self, individuox, individuoy):
         corte = rng.randint(0, len(self.matrizReferencia) - 1)
-        print(corte)
         novox = []
         novoy = []
         resultado = []

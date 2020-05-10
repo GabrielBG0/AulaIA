@@ -79,7 +79,7 @@ class AlocacaoArtigos:
                 individuo), self.historicoFitness, individuo]
         elif self.melhorFitness[0] < self.fitness(individuo):
             self.melhorFitness = [self.fitness(
-                individuo), self.getFitnessPop(populacao), individuo]
+                individuo), self.historicoFitness, individuo]
 
     def calculateAvredgeFitness(self, fitnesses):
         avredge = []

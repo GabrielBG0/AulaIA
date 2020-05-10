@@ -1,11 +1,12 @@
 import random as rng
 import numpy as np
 import matplotlib.pyplot as plt
+from copy import deepcopy
 
 
 class AlocacaoArtigos:
 
-    def __init__(self, dataFilePath, outputPath, populationSize=6, maxgen=100, mutationrate=0.25, crossoverrate=0.75):
+    def __init__(self, dataFilePath, outputPath, populationSize=6, maxgen=100, mutationrate=0.25, crossoverrate=0.75, repeticoes=10):
 
         self.dataFilePath = dataFilePath
         self.outputPath = outputPath
@@ -13,6 +14,7 @@ class AlocacaoArtigos:
         self.maxgen = maxgen
         self.mutationrate = mutationrate
         self.crossoverrate = crossoverrate
+        self.repeticoes = repeticoes
         self.loadDataFromFile()
 
     def loadDataFromFile(self):
@@ -29,18 +31,70 @@ class AlocacaoArtigos:
                 else:
                     capacidade = i[j]
             self.matrizReferencia.append([artigos, capacidade])
-        self.fitnessTotal = []
-        self.historicoFitness = []
-        self.populacao = []
+        self.melhorFitness = []
+        self.avredgeFitness = []
 
     def run(self):
+        for i in range(self.repeticoes):
+            self.initialize()
+            self.alocate(self.populacao)
+        self.plotFitnessGraph(
+            self.melhorFitness[1], self.calculateAvredgeFitness(self.avredgeFitness))
+        self.resultadoTotxt(self.melhorFitness[2])
 
-        self.initialize()
-        self.alocate(self.populacao)
+    # função principal, aloca revisores e artigos usando mutação, reprodução e seleção.
+    def alocate(self, population):
+        for geracao in range(self.maxgen):  # numero de gerações
+            newPopulation = []
+            selecionados = self.selection(self.populacao)
+            for couple in range(len(selecionados)):
+                parents = selecionados[couple]
+                crossoverChance = rng.random()
+                children = []
+                if crossoverChance < self.crossoverrate:
+                    children = self.crossover(parents[0], parents[1])
+                else:
+                    children.append(parents)
+                for child in children[0]:
+                    mutationChance = rng.random()
+                    if mutationChance < self.mutationrate:
+                        child = self.mutate(child)
+                    newPopulation.append(child)
+            for individuo in range(0, len(newPopulation)):
+                teste = self.validate(newPopulation[individuo])
+                while teste == False:
+                    newPopulation[individuo] = deepcopy(self.correcao(
+                        newPopulation[individuo]))
+                    teste = self.validate(newPopulation[individuo])
+            self.populacao = deepcopy(newPopulation)
+            print('\nGERAÇÃO #', geracao+1)
+            self.showPopulation()
+            self.fitnessPop(self.populacao)
+        self.avredgeFitness.append(self.historicoFitness)
+        self.attMelhorFitness(self.getBest(self.populacao), self.populacao)
+
+    def attMelhorFitness(self, individuo, populacao):
+        if self.melhorFitness == []:
+            self.melhorFitness = [self.fitness(
+                individuo), self.historicoFitness, individuo]
+        elif self.melhorFitness[0] < self.fitness(individuo):
+            self.melhorFitness = [self.fitness(
+                individuo), self.getFitnessPop(populacao), individuo]
+
+    def calculateAvredgeFitness(self, fitnesses):
+        avredge = []
+        for i in range(0, len(fitnesses[1])):
+            avgFitnessGen = 0
+            for j in range(0, len(fitnesses)):
+                avgFitnessGen += fitnesses[j][i]
+            avredge.append(avgFitnessGen / len(fitnesses))
+        return avredge
 
     # gera a população inicial aleatoriamente
     def initialize(self):
-
+        self.fitnessTotal = []
+        self.populacao = []
+        self.historicoFitness = []
         for n in range(self.populationSize):  # gerar 6 individuos
             # enquanto não houver individuos validos suficientes
             while len(self.populacao) < self.populationSize:
@@ -108,46 +162,45 @@ class AlocacaoArtigos:
         return individuo
 
     def correcao(self, individuo):
-        valido = False
-        while valido == False:
-            # Remove artigos excedentes ao limite dos revisores.
-            for i in range(len(self.matrizReferencia)):
-                aloc = self.contAloc(individuo[i])
-                while aloc > self.matrizReferencia[i][1]:
-                    j = rng.randint(0, len(individuo[i]) - 1)
-                    if individuo[i][j] == 1:
-                        individuo[i][j] = 0
-                        aloc -= 1
+        # Remove artigos excedentes ao limite dos revisores.
+        for i in range(len(self.matrizReferencia)):
+            aloc = self.contAloc(individuo[i])
+            while aloc > self.matrizReferencia[i][1]:
+                j = rng.randint(0, len(individuo[i]) - 1)
+                if individuo[i][j] == 1:
+                    individuo[i][j] = 0
+                    aloc -= 1
 
-            # Remove um artigo dado a mais de um corretor, priorizando o corretor com maior afinidade
-            for i in range(0, self.nArtigos):
-                corretoresx = []
-                for j in range(0, len(individuo)):
-                    if individuo[j][i] == 1:
-                        corretoresx.append(j)
-                if len(corretoresx) > 1:
-                    maiorNota = 0
-                    indiceCorretor = -1
-                    for corretor in range(0, len(corretoresx)):
-                        if corretor == 0:
-                            maiorNota = self.matrizReferencia[corretoresx[corretor]][0][i]
-                            indiceCorretor = corretoresx[corretor]
-                        elif self.matrizReferencia[corretoresx[corretor]][0][i] > maiorNota:
-                            individuo[indiceCorretor][i] = 0
-                            maiorNota = self.matrizReferencia[corretoresx[corretor]][0][i]
-                            indiceCorretor = corretoresx[corretor]
-                        else:
-                            individuo[corretoresx[corretor]][i] = 0
+        # Remove um artigo dado a mais de um corretor, priorizando o corretor com maior afinidade
+        for i in range(0, self.nArtigos):
+            corretoresx = []
+            for j in range(0, len(individuo)):
+                if individuo[j][i] == 1:
+                    corretoresx.append(j)
+            if len(corretoresx) > 1:
+                maiorNota = 0
+                indiceCorretor = -1
+                for corretor in range(0, len(corretoresx)):
+                    if corretor == 0:
+                        maiorNota = self.matrizReferencia[corretoresx[corretor]][0][i]
+                        indiceCorretor = corretoresx[corretor]
+                    elif self.matrizReferencia[corretoresx[corretor]][0][i] > maiorNota:
+                        individuo[indiceCorretor][i] = 0
+                        maiorNota = self.matrizReferencia[corretoresx[corretor]][0][i]
+                        indiceCorretor = corretoresx[corretor]
+                    else:
+                        individuo[corretoresx[corretor]][i] = 0
 
-            # Atribui corretores a artigos não alocados
-            semCorretor = []
-            for i in range(0, self.nArtigos):
-                corretoresx = []
-                for j in range(0, len(individuo)):
-                    if individuo[j][i] == 1:
-                        corretoresx.append(j)
-                if len(corretoresx) == 0:
-                    semCorretor.append(i)
+        # Atribui corretores a artigos não alocados
+        semCorretor = []
+        for i in range(0, self.nArtigos):
+            corretoresx = []
+            for j in range(0, len(individuo)):
+                if individuo[j][i] == 1:
+                    corretoresx.append(j)
+            if len(corretoresx) == 0:
+                semCorretor.append(i)
+        while len(semCorretor) > 0:
             for corretor in range(0, len(individuo)):
                 if len(semCorretor) > 0:
                     corrigidos = 0
@@ -158,9 +211,6 @@ class AlocacaoArtigos:
                         individuo[corretor][semCorretor.pop()] = 1
                 else:
                     break
-
-            if self.validate(individuo):
-                valido = True
 
         return individuo
 
@@ -179,9 +229,6 @@ class AlocacaoArtigos:
                 novox.append(individuoy[i])
                 novoy.append(individuox[i])
 
-        novox = self.correcao(novox)
-        novoy = self.correcao(novoy)
-
         resultado.append([novox, novoy])
         return resultado
 
@@ -194,8 +241,6 @@ class AlocacaoArtigos:
 
         total = np.sum(self.fitnessTotal)
         porcaoRoleta = []
-
-        self.historicoFitness.append(np.mean(self.fitnessTotal))
 
         for fitness in self.fitnessTotal:
             porcaoRoleta.append((fitness * 360) / total)
@@ -239,35 +284,11 @@ class AlocacaoArtigos:
             fitnessPop.append(self.fitness(individuo))
         self.historicoFitness.append(np.mean(fitnessPop))
 
-    # função principal, aloca revisores e artigos usando mutação, reprodução e seleção.
-    def alocate(self, population):
-        for geracao in range(self.maxgen):  # numero de gerações
-            newPopulation = []
-            selecionados = self.selection(self.populacao)
-            for couple in range(len(selecionados)):
-                parents = selecionados[couple]
-                crossoverChance = rng.random()
-                children = []
-                if crossoverChance < self.crossoverrate:
-                    children = self.crossover(parents[0], parents[1])
-                else:
-                    children.append(parents)
-                for child in children[0]:
-                    mutationChance = rng.random()
-                    if mutationChance < self.mutationrate:
-                        child = self.mutate(child)
-                    newPopulation.append(child)
-            self.populacao = newPopulation
-            print('\nGERAÇÃO #', geracao+1)
-            self.showPopulation()
-            self.fitnessPop(self.populacao)
-        for i in self.historicoFitness:
-            print('%0.2f' % i)
-        self.plotFitnessGraph(self.historicoFitness, [1.0, 1.0, 1.0])
-
-        self.getBest(self.populacao)
-
-        return
+    def getFitnessPop(self, populacao):
+        fitnessPop = []
+        for individuo in populacao:
+            fitnessPop.append(self.fitness(individuo))
+        return fitnessPop
 
     # percorre um corretor e conta quantos artigos ele está alocado para corrigir
     def contAloc(self, corretor):
@@ -282,16 +303,16 @@ class AlocacaoArtigos:
         for individuo in populacao:
             if self.fitness(individuo) > self.fitness(melhor):
                 melhor = individuo
-        self.resultadoTotxt(melhor)
+        return melhor
 
-    def plotFitnessGraph(self, bestTrainingErrorsList, avredgeTraningListError):
-        xAxisValues1 = range(0, len(bestTrainingErrorsList))
-        xAxisValues2 = range(0, len(avredgeTraningListError))
+    def plotFitnessGraph(self, bestFitnessList, avredgeFitnessList):
+        xAxisValues1 = range(0, len(bestFitnessList))
+        xAxisValues2 = range(0, len(avredgeFitnessList))
 
-        line1 = plt.plot(xAxisValues1, bestTrainingErrorsList,
+        line1 = plt.plot(xAxisValues1, bestFitnessList,
                          label="Best Fitness")
-        line2 = plt.plot(xAxisValues2, avredgeTraningListError,
-                         linestyle="dashed", label="Avredge Traning List Error")
+        line2 = plt.plot(xAxisValues2, avredgeFitnessList,
+                         linestyle="dashed", label="Avredge Fitness")
 
         plt.legend()
         plt.xlabel("Iteration")
@@ -314,5 +335,5 @@ class AlocacaoArtigos:
 
 if __name__ == '__main__':
     geneticAlg = AlocacaoArtigos(
-        "C:/Users/gabre/Documents/IA/Trabalho/database.txt", "C:/Users/gabre/Documents/IA/Trabalho", 4)
+        "C:/Users/gabre/Documents/IA/Trabalho/database.txt", "C:/Users/gabre/Documents/IA/Trabalho")
     geneticAlg.run()

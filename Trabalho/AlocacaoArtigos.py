@@ -16,6 +16,7 @@ class AlocacaoArtigos:
         self.crossoverrate = crossoverrate
         self.repeticoes = repeticoes
         self.loadDataFromFile()
+        # oiA
 
     def loadDataFromFile(self):
         dataSetLoded = np.loadtxt(self.dataFilePath, delimiter=',')

@@ -6,24 +6,51 @@ from sklearn.linear_model import LogisticRegression
 from sklearn import model_selection
 from sklearn import metrics
 from sklearn import datasets
+from sklearn import preprocessing
 import numpy as np
+import pandas as pd
 
+class dataset():
+    def __init__ (self, data, target):
+        self.target = target
+        self.data = data 
 
 class Trabalho:
 
-    def __init__(self, dataFilePath=None, outputPath=None, testDataSet=False, maxIter=100, fileType=''):
+    def __init__(self, dataFilePath=None, outputPath=None, testDataSet=False, maxIter=100):
         self.dataFilePath = dataFilePath
         self.outputPath = outputPath
         self.testDataSet = testDataSet
-        if (dataFilePath == None) and (testDataSet == False):
+        if (dataFilePath is None) and (testDataSet == False):
             self.testDataSet = True
         self.maxIter = maxIter
+
+        categorical = ["chess", "fungi", "numbers", "tic-tac-toe"]
+        continuous = ["banknotes", "ecoli", "glass","iris", "libras", "wine"]
+        self.paths = categorical + continuous
+
         self.loadDataset()
         self.initAlgorithm()
 
     def loadDataset(self):
+        index = 3
         if self.testDataSet:
-            self.dataset = datasets.load_digits()
+            ds = pd.read_csv("Datasets/%s/%s.csv" %(self.paths[index], self.paths[index]))
+            ds = np.array(ds)
+
+            data = []
+            target = []
+            for row in range(ds.shape[0]):
+                a = []
+                for col in range(ds.shape[1]-1):
+                    a.append(ds[row][col])
+                a = np.array(a)
+                data.append(a)
+                target.append(ds[row][-1])
+            data = np.array(data)
+            target = np.array(target)
+            
+            self.dataset = dataset(data, target)
         else:
             return None
 
@@ -45,6 +72,12 @@ class Trabalho:
             self.dataset.target.shape[0])
 
     def startTraining(self):
+        ohe = preprocessing.OneHotEncoder()
+        oe = preprocessing.OrdinalEncoder()
+        self.dataset.data = ohe.fit_transform(self.dataset.data).toarray()
+        self.dataset.target = oe.fit_transform(self.dataset.target.reshape(-1, 1))
+        self.dataset.target = self.dataset.target.reshape(1, -1)[0]
+
         for train, test in self.kf.split(self.dataset.data, self.dataset.target):
             data_train, target_train = self.dataset.data[train], self.dataset.target[train]
             data_test, target_test = self.dataset.data[test], self.dataset.target[test]

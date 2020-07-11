@@ -10,32 +10,36 @@ from sklearn import preprocessing
 import numpy as np
 import pandas as pd
 
+
 class dataset():
-    def __init__ (self, data, target):
+    def __init__(self, data, target):
         self.target = target
-        self.data = data 
+        self.data = data
+
 
 class Trabalho:
 
-    def __init__(self, dataFilePath=None, outputPath=None, testDataSet=False, maxIter=100):
+    def __init__(self, dataFilePath=None, outputPath=None, datasetIndex=1, testDataSet=False, maxIter=100):
         self.dataFilePath = dataFilePath
         self.outputPath = outputPath
         self.testDataSet = testDataSet
         if (dataFilePath is None) and (testDataSet == False):
             self.testDataSet = True
         self.maxIter = maxIter
+        self.datasetIndex = datasetIndex
 
         categorical = ["chess", "fungi", "numbers", "tic-tac-toe"]
-        continuous = ["banknotes", "ecoli", "glass","iris", "libras", "wine"]
+        continuous = ["banknote", "ecoli", "glass", "iris", "libras", "wine"]
         self.paths = categorical + continuous
 
         self.loadDataset()
         self.initAlgorithm()
 
     def loadDataset(self):
-        index = 3
-        if self.testDataSet:
-            ds = pd.read_csv("Datasets/%s/%s.csv" %(self.paths[index], self.paths[index]))
+        index = self.datasetIndex
+        if self.testDataSet == False:
+            ds = pd.read_csv(self.dataFilePath %
+                             (self.paths[index], self.paths[index]))
             ds = np.array(ds)
 
             data = []
@@ -49,10 +53,10 @@ class Trabalho:
                 target.append(ds[row][-1])
             data = np.array(data)
             target = np.array(target)
-            
+
             self.dataset = dataset(data, target)
         else:
-            return None
+            self.dataset = datasets.load_digits()
 
     def initAlgorithm(self):
         self.dt = tree.DecisionTreeClassifier()
@@ -75,7 +79,8 @@ class Trabalho:
         ohe = preprocessing.OneHotEncoder()
         oe = preprocessing.OrdinalEncoder()
         self.dataset.data = ohe.fit_transform(self.dataset.data).toarray()
-        self.dataset.target = oe.fit_transform(self.dataset.target.reshape(-1, 1))
+        self.dataset.target = oe.fit_transform(
+            self.dataset.target.reshape(-1, 1))
         self.dataset.target = self.dataset.target.reshape(1, -1)[0]
 
         for train, test in self.kf.split(self.dataset.data, self.dataset.target):
@@ -103,20 +108,37 @@ class Trabalho:
             self.predicted_classes['logReg'][test] = logReg_predicted
 
     def showInfo(self):
+        print(
+            "=======================================================================")
+        print(self.paths[self.datasetIndex])
+        print(
+            "=======================================================================")
         for classifier in self.predicted_classes.keys():
             print(
                 "=======================================================================")
+            print(self.paths[self.datasetIndex])
             print("Resultados do classificador: %s\n%s\n"
                   % (classifier, metrics.classification_report(self.dataset.target, self.predicted_classes[classifier])))
             print("Matriz de confusão: \n%s\n\n\n" % metrics.confusion_matrix(
                 self.dataset.target, self.predicted_classes[classifier]))
 
+    def saveInfo(self):
+        for classifier in self.predicted_classes.keys():
+            report = metrics.classification_report(
+                self.dataset.target, self.predicted_classes[classifier], output_dict=True)
+            dfReport = pd.DataFrame(data=report).transpose()
+            dfReport.to_csv("Results/%s/%s.csv" %
+                            (self.paths[self.datasetIndex], classifier))
+
     def default_rotine(self):
         self.initAlgorithm()
         self.startTraining()
         self.showInfo()
+        self.saveInfo()
 
 
 if __name__ == '__main__':
-    comparador = Trabalho(testDataSet=True)
-    comparador.default_rotine()
+    for i in range(0, 10):
+        comparador = Trabalho(
+            dataFilePath="C:/Users/gabre/Documents/IA/Trabalho2/Datasets/%s/%s.csv", datasetIndex=i)
+        comparador.default_rotine()

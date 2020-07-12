@@ -9,6 +9,7 @@ from sklearn import datasets
 from sklearn import preprocessing
 import numpy as np
 import pandas as pd
+from datetime import datetime
 
 
 class dataset():
@@ -28,9 +29,10 @@ class Trabalho:
         self.maxIter = maxIter
         self.datasetIndex = datasetIndex
 
-        categorical = ["chess", "fungi", "numbers", "tic-tac-toe"]
-        continuous = ["banknote", "ecoli", "glass", "iris", "libras", "wine"]
-        self.paths = categorical + continuous
+        self.categorical = ["chess", "fungi", "numbers", "tic-tac-toe"]
+        self.continuous = ["banknote", "ecoli",
+                           "glass", "iris", "libras", "wine"]
+        self.paths = self.categorical + self.continuous
 
         self.loadDataset()
         self.initAlgorithm()
@@ -78,11 +80,15 @@ class Trabalho:
     def startTraining(self):
         ohe = preprocessing.OneHotEncoder()
         oe = preprocessing.OrdinalEncoder()
-        self.dataset.data = ohe.fit_transform(self.dataset.data).toarray()
+
+        if(self.paths[self.datasetIndex] in self.categorical):
+            self.dataset.data = ohe.fit_transform(self.dataset.data).toarray()
+
         self.dataset.target = oe.fit_transform(
             self.dataset.target.reshape(-1, 1))
         self.dataset.target = self.dataset.target.reshape(1, -1)[0]
 
+        tree, knn, nb, mlp, logreg = [], [], [], [], []
         for train, test in self.kf.split(self.dataset.data, self.dataset.target):
             data_train, target_train = self.dataset.data[train], self.dataset.target[train]
             data_test, target_test = self.dataset.data[test], self.dataset.target[test]
@@ -90,29 +96,58 @@ class Trabalho:
             self.dt = self.dt.fit(data_train, target_train)
             dt_predicted = self.dt.predict(data_test)
             self.predicted_classes['tree'][test] = dt_predicted
+            f1_score = metrics.f1_score(
+                self.dataset.target[test], dt_predicted, average="macro")
+            accuracy = metrics.accuracy_score(
+                self.dataset.target[test], dt_predicted)
+            tree.append([f1_score, accuracy])
 
             self.knn = self.knn.fit(data_train, target_train)
             knn_predicted = self.knn.predict(data_test)
             self.predicted_classes['knn'][test] = knn_predicted
+            f1_score = metrics.f1_score(
+                self.dataset.target[test], knn_predicted, average="macro")
+            accuracy = metrics.accuracy_score(
+                self.dataset.target[test], knn_predicted)
+            knn.append([f1_score, accuracy])
 
             self.nb = self.nb.fit(data_train, target_train)
             nb_predicted = self.nb.predict(data_test)
             self.predicted_classes['naiveb'][test] = nb_predicted
+            f1_score = metrics.f1_score(
+                self.dataset.target[test], nb_predicted, average="macro")
+            accuracy = metrics.accuracy_score(
+                self.dataset.target[test], nb_predicted)
+            nb.append([f1_score, accuracy])
 
             self.mlp = self.mlp.fit(data_train, target_train)
             mlp_predicted = self.mlp.predict(data_test)
             self.predicted_classes['mlp'][test] = mlp_predicted
+            f1_score = metrics.f1_score(
+                self.dataset.target[test], mlp_predicted, average="macro")
+            accuracy = metrics.accuracy_score(
+                self.dataset.target[test], mlp_predicted)
+            mlp.append([f1_score, accuracy])
 
             self.logReg = self.logReg.fit(data_train, target_train)
             logReg_predicted = self.logReg.predict(data_test)
             self.predicted_classes['logReg'][test] = logReg_predicted
+            f1_score = metrics.f1_score(
+                self.dataset.target[test], logReg_predicted, average="macro")
+            accuracy = metrics.accuracy_score(
+                self.dataset.target[test], logReg_predicted)
+            logreg.append([f1_score, accuracy])
+
+        self.alg_folds = [tree, knn, nb, mlp, logreg]
+        self.final_metrics = []
+        for i in self.alg_folds:
+            self.final_metrics.append(
+                [np.mean(i[0], axis=0), np.std(i[0], axis=0)])
 
     def showInfo(self):
-        print(
-            "=======================================================================")
+        print("=======================================================================")
         print(self.paths[self.datasetIndex])
-        print(
-            "=======================================================================")
+        print("=======================================================================")
         for classifier in self.predicted_classes.keys():
             print(
                 "=======================================================================")
@@ -138,7 +173,7 @@ class Trabalho:
 
 
 if __name__ == '__main__':
-    for i in range(0, 10):
-        comparador = Trabalho(
-            dataFilePath="C:/Users/gabre/Documents/IA/Trabalho2/Datasets/%s/%s.csv", datasetIndex=i)
-        comparador.default_rotine()
+    start = datetime.now()
+    comparador = Trabalho()
+    comparador.default_rotine()
+    print(datetime.now()-start)

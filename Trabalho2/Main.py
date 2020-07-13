@@ -66,16 +66,6 @@ class Trabalho:
         self.nb = GaussianNB()
         self.mlp = MLPClassifier()
         self.logReg = LogisticRegression()
-        self.kf = model_selection.StratifiedKFold(n_splits=10)
-
-        self.predicted_classes = dict()
-        self.predicted_classes['tree'] = np.zeros(self.dataset.target.shape[0])
-        self.predicted_classes['knn'] = np.zeros(self.dataset.target.shape[0])
-        self.predicted_classes['naiveb'] = np.zeros(
-            self.dataset.target.shape[0])
-        self.predicted_classes['mlp'] = np.zeros(self.dataset.target.shape[0])
-        self.predicted_classes['logReg'] = np.zeros(
-            self.dataset.target.shape[0])
 
     def startTraining(self):
         ohe = preprocessing.OneHotEncoder()
@@ -88,7 +78,7 @@ class Trabalho:
             self.dataset.target.reshape(-1, 1))
         self.dataset.target = self.dataset.target.reshape(1, -1)[0]
 
-        Scoring = ['accuracy', 'f1']
+        Scoring = ['accuracy', 'f1_macro']
 
         parametres_tree = {'splitter': (
             'best', 'random'), 'max_depth': [4, 8, 16, None]}
@@ -118,73 +108,6 @@ class Trabalho:
         self.gsNaiveb.fit(self.dataset.data, self.dataset.target)
         self.gsMlp.fit(self.dataset.data, self.dataset.target)
         self.gsLogreg.fit(self.dataset.data, self.dataset.target)
-
-    def startTrainingOld(self):
-        ohe = preprocessing.OneHotEncoder()
-        oe = preprocessing.OrdinalEncoder()
-
-        if(self.paths[self.datasetIndex] in self.categorical):
-            self.dataset.data = ohe.fit_transform(self.dataset.data).toarray()
-
-        self.dataset.target = oe.fit_transform(
-            self.dataset.target.reshape(-1, 1))
-        self.dataset.target = self.dataset.target.reshape(1, -1)[0]
-
-        tree, knn, nb, mlp, logreg = [], [], [], [], []
-        for train, test in self.kf.split(self.dataset.data, self.dataset.target):
-            data_train, target_train = self.dataset.data[train], self.dataset.target[train]
-            data_test, target_test = self.dataset.data[test], self.dataset.target[test]
-
-            self.dt = self.dt.fit(data_train, target_train)
-            dt_predicted = self.dt.predict(data_test)
-            self.predicted_classes['tree'][test] = dt_predicted
-            f1_score = metrics.f1_score(
-                self.dataset.target[test], dt_predicted, average="macro")
-            accuracy = metrics.accuracy_score(
-                self.dataset.target[test], dt_predicted)
-            tree.append([f1_score, accuracy])
-
-            self.knn = self.knn.fit(data_train, target_train)
-            knn_predicted = self.knn.predict(data_test)
-            self.predicted_classes['knn'][test] = knn_predicted
-            f1_score = metrics.f1_score(
-                self.dataset.target[test], knn_predicted, average="macro")
-            accuracy = metrics.accuracy_score(
-                self.dataset.target[test], knn_predicted)
-            knn.append([f1_score, accuracy])
-
-            self.nb = self.nb.fit(data_train, target_train)
-            nb_predicted = self.nb.predict(data_test)
-            self.predicted_classes['naiveb'][test] = nb_predicted
-            f1_score = metrics.f1_score(
-                self.dataset.target[test], nb_predicted, average="macro")
-            accuracy = metrics.accuracy_score(
-                self.dataset.target[test], nb_predicted)
-            nb.append([f1_score, accuracy])
-
-            self.mlp = self.mlp.fit(data_train, target_train)
-            mlp_predicted = self.mlp.predict(data_test)
-            self.predicted_classes['mlp'][test] = mlp_predicted
-            f1_score = metrics.f1_score(
-                self.dataset.target[test], mlp_predicted, average="macro")
-            accuracy = metrics.accuracy_score(
-                self.dataset.target[test], mlp_predicted)
-            mlp.append([f1_score, accuracy])
-
-            self.logReg = self.logReg.fit(data_train, target_train)
-            logReg_predicted = self.logReg.predict(data_test)
-            self.predicted_classes['logReg'][test] = logReg_predicted
-            f1_score = metrics.f1_score(
-                self.dataset.target[test], logReg_predicted, average="macro")
-            accuracy = metrics.accuracy_score(
-                self.dataset.target[test], logReg_predicted)
-            logreg.append([f1_score, accuracy])
-
-        self.alg_folds = [tree, knn, nb, mlp, logreg]
-        self.final_metrics = []
-        for i in self.alg_folds:
-            self.final_metrics.append(
-                [np.mean(i[0], axis=0), np.std(i[0], axis=0)])
 
     def showInfo(self):
         print("=======================================================================")
@@ -272,24 +195,16 @@ class Trabalho:
         dtReport.to_csv("Results/%s/LogReg.csv" %
                         (self.paths[self.datasetIndex]))
 
-    def saveInfoOld(self):
-        for classifier in self.predicted_classes.keys():
-            report = metrics.classification_report(
-                self.dataset.target, self.predicted_classes[classifier], output_dict=True)
-            dfReport = pd.DataFrame(data=report).transpose()
-            dfReport.to_csv("Results/%s/%s.csv" %
-                            (self.paths[self.datasetIndex], classifier))
-
     def default_rotine(self):
         self.initAlgorithm()
         self.startTraining()
-        self.showInfo()
         self.saveInfo()
+        self.showInfo()
 
 
 if __name__ == '__main__':
     start = datetime.now()
     comparador = Trabalho(
-        dataFilePath="Datasets/%s/%s.csv", datasetIndex=3)
+        dataFilePath="Datasets/%s/%s.csv", datasetIndex=9)
     comparador.default_rotine()
     print(datetime.now()-start)

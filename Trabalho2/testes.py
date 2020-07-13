@@ -4,3 +4,14 @@ start = datetime.now()
             dataFilePath="Datasets/%s/%s.csv", datasetIndex=i)
         comparador.default_rotine()
     print(datetime.now()-start)
+
+
+start = datetime.now()
+   comparador = Trabalho()
+    comparador.default_rotine()
+    print(datetime.now()-start)
+
+
+
+
+

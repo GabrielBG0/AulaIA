@@ -88,6 +88,48 @@ class Trabalho:
             self.dataset.target.reshape(-1, 1))
         self.dataset.target = self.dataset.target.reshape(1, -1)[0]
 
+        Scoring = ['accuracy', 'f1']
+
+        parametres_tree = {'splitter': (
+            'best', 'random'), 'max_depth': [4, 8, 16, None]}
+        self.gsTree = model_selection.GridSearchCV(
+            self.dt, parametres_tree, return_train_score=True, cv=10, scoring=Scoring, refit='accuracy')
+
+        parametres_knn = {'weights': ('uniform', 'distance'), 'p': (1, 2)}
+        self.gsKnn = model_selection.GridSearchCV(
+            self.knn, parametres_knn, return_train_score=True, cv=10, scoring=Scoring, refit='accuracy')
+
+        parametres_naiveb = {'var_smoothing': [1e-9, 1e-10]}
+        self.gsNaiveb = model_selection.GridSearchCV(
+            self.nb, parametres_naiveb, return_train_score=True, cv=10, scoring=Scoring, refit='accuracy')
+
+        parametres_mlp = {'hidden_layer_sizes': [100, 200], 'learning_rate_init': [
+            0.001, 0.01], 'max_iter': [200, 300], 'alpha': [0.0001, 0.001]}
+        self.gsMlp = model_selection.GridSearchCV(
+            self.mlp, parametres_mlp, return_train_score=True, cv=10, scoring=Scoring, refit='accuracy')
+
+        parametres_logreg = {'C': [1.0, 2.0], 'solver': (
+            'newton-cg', 'lbfgs', 'sag', 'saga'), 'max_iter': [100, 200, 300]}
+        self.gsLogreg = model_selection.GridSearchCV(
+            self.logReg, parametres_logreg, return_train_score=True, cv=10, scoring=Scoring, refit='accuracy')
+
+        self.gsTree.fit(self.dataset.data, self.dataset.target)
+        self.gsKnn.fit(self.dataset.data, self.dataset.target)
+        self.gsNaiveb.fit(self.dataset.data, self.dataset.target)
+        self.gsMlp.fit(self.dataset.data, self.dataset.target)
+        self.gsLogreg.fit(self.dataset.data, self.dataset.target)
+
+    def startTrainingOld(self):
+        ohe = preprocessing.OneHotEncoder()
+        oe = preprocessing.OrdinalEncoder()
+
+        if(self.paths[self.datasetIndex] in self.categorical):
+            self.dataset.data = ohe.fit_transform(self.dataset.data).toarray()
+
+        self.dataset.target = oe.fit_transform(
+            self.dataset.target.reshape(-1, 1))
+        self.dataset.target = self.dataset.target.reshape(1, -1)[0]
+
         tree, knn, nb, mlp, logreg = [], [], [], [], []
         for train, test in self.kf.split(self.dataset.data, self.dataset.target):
             data_train, target_train = self.dataset.data[train], self.dataset.target[train]
@@ -148,16 +190,89 @@ class Trabalho:
         print("=======================================================================")
         print(self.paths[self.datasetIndex])
         print("=======================================================================")
-        for classifier in self.predicted_classes.keys():
-            print(
-                "=======================================================================")
-            print(self.paths[self.datasetIndex])
-            print("Resultados do classificador: %s\n%s\n"
-                  % (classifier, metrics.classification_report(self.dataset.target, self.predicted_classes[classifier])))
-            print("Matriz de confusão: \n%s\n\n\n" % metrics.confusion_matrix(
-                self.dataset.target, self.predicted_classes[classifier]))
+        print("-----------------------------------------------------------------------")
+        print("Tree")
+        print("////////////")
+        print(self.gsTree.best_estimator_)
+        print("////////////")
+        print(self.gsTree.best_score_)
+        print("////////////")
+        print(self.gsTree.best_params_)
+        print("////////////")
+        print(self.gsTree.best_index_)
+        print("////////////")
+        print(self.gsTree.scorer_)
+        print("-----------------------------------------------------------------------")
+        print("Knn")
+        print("////////////")
+        print(self.gsKnn.best_estimator_)
+        print("////////////")
+        print(self.gsKnn.best_score_)
+        print("////////////")
+        print(self.gsKnn.best_params_)
+        print("////////////")
+        print(self.gsKnn.best_index_)
+        print("////////////")
+        print(self.gsKnn.scorer_)
+        print("-----------------------------------------------------------------------")
+        print("Naive Bayes")
+        print("////////////")
+        print(self.gsNaiveb.best_estimator_)
+        print("////////////")
+        print(self.gsNaiveb.best_score_)
+        print("////////////")
+        print(self.gsNaiveb.best_params_)
+        print("////////////")
+        print(self.gsNaiveb.best_index_)
+        print("////////////")
+        print(self.gsNaiveb.scorer_)
+        print("-----------------------------------------------------------------------")
+        print("MLP")
+        print("////////////")
+        print(self.gsMlp.best_estimator_)
+        print("////////////")
+        print(self.gsMlp.best_score_)
+        print("////////////")
+        print(self.gsMlp.best_params_)
+        print("////////////")
+        print(self.gsMlp.best_index_)
+        print("////////////")
+        print(self.gsMlp.scorer_)
+        print("-----------------------------------------------------------------------")
+        print("Logistic Regration")
+        print("////////////")
+        print(self.gsLogreg.best_estimator_)
+        print("////////////")
+        print(self.gsLogreg.best_score_)
+        print("////////////")
+        print(self.gsLogreg.best_params_)
+        print("////////////")
+        print(self.gsLogreg.best_index_)
+        print("////////////")
+        print(self.gsLogreg.scorer_)
 
     def saveInfo(self):
+        dtReport = pd.DataFrame.from_dict(data=self.gsTree.cv_results_)
+        dtReport.to_csv("Results/%s/Tree.csv" %
+                        (self.paths[self.datasetIndex]))
+
+        dtReport = pd.DataFrame.from_dict(data=self.gsKnn.cv_results_)
+        dtReport.to_csv("Results/%s/Knn.csv" %
+                        (self.paths[self.datasetIndex]))
+
+        dtReport = pd.DataFrame.from_dict(data=self.gsNaiveb.cv_results_)
+        dtReport.to_csv("Results/%s/NaiveB.csv" %
+                        (self.paths[self.datasetIndex]))
+
+        dtReport = pd.DataFrame.from_dict(data=self.gsMlp.cv_results_)
+        dtReport.to_csv("Results/%s/MLP.csv" %
+                        (self.paths[self.datasetIndex]))
+
+        dtReport = pd.DataFrame.from_dict(data=self.gsLogreg.cv_results_)
+        dtReport.to_csv("Results/%s/LogReg.csv" %
+                        (self.paths[self.datasetIndex]))
+
+    def saveInfoOld(self):
         for classifier in self.predicted_classes.keys():
             report = metrics.classification_report(
                 self.dataset.target, self.predicted_classes[classifier], output_dict=True)
@@ -174,6 +289,7 @@ class Trabalho:
 
 if __name__ == '__main__':
     start = datetime.now()
-    comparador = Trabalho()
+    comparador = Trabalho(
+        dataFilePath="Datasets/%s/%s.csv", datasetIndex=3)
     comparador.default_rotine()
     print(datetime.now()-start)

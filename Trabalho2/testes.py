@@ -8,10 +8,5 @@ start = datetime.now()
 
 start = datetime.now()
    comparador = Trabalho()
-    comparador.default_rotine()
-    print(datetime.now()-start)
-
-
-
-
-
+       comparador.default_rotine()
+        print(datetime.now()-start)

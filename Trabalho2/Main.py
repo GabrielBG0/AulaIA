@@ -46,9 +46,9 @@ class Trabalho:
 
             data = []
             target = []
-            for row in range(ds.shape[0]):
+            for row in range(len(ds[0])):
                 a = []
-                for col in range(ds.shape[1]-1):
+                for col in range(len(ds-1)):
                     a.append(ds[row][col])
                 a = np.array(a)
                 data.append(a)
